@@ -1,43 +1,67 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-int** getSubsequences(int* E, int N, int k) {
-    int** X = (int**)malloc((N - k + 1) * sizeof(int*));
+int T(int* E, int M, int k, int* X) {
+    int count = 0;
     
-    for (int i = 0; i <= N - k; i++) {
-        X[i] = (int*)malloc(k * sizeof(int));
+    // Iterating through E
+    for (int n = 0; n < M; n++) {
+        bool target = true;
+        
         for (int j = 0; j < k; j++) {
-            X[i][j] = E[i + j];
+            if (E[n+j] != X[j]) {
+                target = false;
+                break;
+            }
+        }
+        
+        if (target == true) {
+            count++;
         }
     }
-    
-    return X;
+    return count;
 }
 
-void checkPseudorandom(int* E, int N) {
-    int condition = log(N) / log(2);
+bool checkPseudorandom(int* E, int N) {
+    int condition = (int)(log(N) / log(2));
     
     for (int k = 1; k <= condition; k++) {
-        int** X = getSubsequences(E, N, k);
+        int kPow = (int)pow(2, k);
         
-        // Printing out X FOR TESTING ONLY
-        for (int i = 0; i < (N - k + 1); i++) {
-            printf("Subsequence %d: ", i + 1);
-            for (int j = 0; j < k; j++) {
-                printf("%d ", X[i][j]);
+        // Iterating through all subsequences of k
+        for (int i = 0; i < kPow; i++) {
+            int X[k];
+            
+            // Generating Subsequence
+            for (int j=0; j<k; j++) {
+                if(i%2) {
+                    X[j] = -1;
+                } else {
+                    X[j] = 1;
+                }
+                i = i / 2;
             }
-            printf("\n");
-            free(X[i]);
+            
+            // Condition Left Value { T(E, M, X) }
+            int M = N + 1 - k;
+            int Tvalue = T(E, M, k, X);
+            
+            // Condition Right Value { N + 1 - K / 2^k }
+            double rVal = (double)(M)/(double)(pow(2,k));
+            
+            if (!(fabs(Tvalue - rVal) <= (1/sqrt(N)))) {
+                return false;
+            }
         }
-        free(X);
-        
-        // this is only until making the subsets
     }
+    return true;
 }
 
 int main() {
     int E[] = {-1, 1, -1, 1, 1, -1, -1, 1};
     int N = 8;
-    checkPseudorandom(E, N);
+    bool random = checkPseudorandom(E, N);
+    printf("%s", random ? "True" : "False");
 }
