@@ -38,7 +38,7 @@ int* createSubseq(int i, int len) {
 }
 
 
-// somewhere in this function it for some reason alwasys returns false even if the string is random also we need to add a E generator
+// somewhere in this function it for some reason alwasys returns false even if the string is random 
 bool checkPseudorandom(int* E, int N) {
     int condition = (int)(log2(N));
     
@@ -65,6 +65,7 @@ bool checkPseudorandom(int* E, int N) {
 }
 
 int main() {
+    // Additionally we need another function so we can generate the array
     int E[] = {1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1};
     int N = 16;
     bool random = checkPseudorandom(E, N);
