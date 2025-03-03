@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-int compute_T(int* E, int N, int k, int* X) {
+int compute_T(int E[], int N, int k, int X[]) {
     int c = 0;
     bool target;
     
@@ -24,9 +24,9 @@ int compute_T(int* E, int N, int k, int* X) {
     return c;
 }
 
-int* createSubseq(int i, int k) {
-    int* X = (int*)malloc(k * sizeof(int));
-    for (int j=0; j<k; j++) {
+int* createSubseq(int i, int len) {
+    int* X = (int*)malloc(len * sizeof(int));
+    for (int j=0; j<len; j++) {
         if(i%2) {
             X[j] = -1;
         } else {
@@ -37,27 +37,28 @@ int* createSubseq(int i, int k) {
     return X;
 }
 
+
+// somewhere in this function it for some reason alwasys returns false even if the string is random also we need to add a E generator
 bool checkPseudorandom(int* E, int N) {
-    int condition = (int)(log(N) / log(2));
+    int condition = (int)(log2(N));
     
     for (int k = 1; k <= condition; k++) {
-        int k_Pow = (int)pow(2, k);
+        int kPow = (int)pow(2, k);
         
         // Iterating through all subsequences of k
-        for (int i = 0; i < k_Pow; i++) {
-        
+        for (int i = 0; i < kPow; i++) {
+            
+            // Create subsequence & get T
             int* X = createSubseq(i, k);
             int M = N - k + 1;
             int T = compute_T(E, M, k, X);
             
             // N + 1 - K / 2^k 
-            double rVal = (double)M/(double)pow(2,k);
-            printf("k: %d, T: %d, rVal: %f, fabs(T - rVal): %f\n", k, T, rVal, fabs(T - rVal));
+            double rVal = (double)M/pow(2,k);
+            printf("k: %d, T: %d, rVal: %f, fabs(T - rVal): %f sqrt: %f\n", k, T, rVal, fabs(T - rVal), (1.0/sqrt(N)));
             if (fabs(T - rVal) > (1.0/sqrt(N))) {
-                free(X);
                 return false;
             }
-            free(X);
         }
     }
     return true;
@@ -67,5 +68,5 @@ int main() {
     int E[] = {1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1};
     int N = 16;
     bool random = checkPseudorandom(E, N);
-    printf("%s", random ? "True" : "False");
+    printf("Result: %s", random ? "True" : "False");
 }
