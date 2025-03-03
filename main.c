@@ -65,7 +65,7 @@ bool checkPseudorandom(int* E, int N) {
 }
 
 int main() {
-    // Additionally we need another function so we can generate the array
+    // Additionally we need another function so we can generate the array there are a few methods he wants us to follow by D. Knuth, TAOCP volume 2
     int E[] = {1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1};
     int N = 16;
     bool random = checkPseudorandom(E, N);
