@@ -3,12 +3,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-int calulateT(int* E, int N, int k, int* X) {
-    int count = 0;
+int compute_T(int* E, int N, int k, int* X) {
+    int c = 0;
+    bool target;
     
     // Iterating through E
     for (int n = 0; n <= N - k; n++) {
-        bool target = true;
+        target = true;
         
         for (int j = 0; j < k; j++) {
             if (E[n+j] != X[j]) {
@@ -16,53 +17,55 @@ int calulateT(int* E, int N, int k, int* X) {
                 break;
             }
         }
-        
         if (target) {
-            count++;
+            c++;
         }
     }
-    return count;
+    return c;
+}
+
+int* createSubseq(int i, int k) {
+    int* X = (int*)malloc(k * sizeof(int));
+    for (int j=0; j<k; j++) {
+        if(i%2) {
+            X[j] = -1;
+        } else {
+            X[j] = 1;
+        }
+        i = i / 2;
+    }
+    return X;
 }
 
 bool checkPseudorandom(int* E, int N) {
     int condition = (int)(log(N) / log(2));
     
     for (int k = 1; k <= condition; k++) {
-        int kPow = (int)pow(2, k);
+        int k_Pow = (int)pow(2, k);
         
         // Iterating through all subsequences of k
-        for (int i = 0; i < kPow; i++) {
-            int X[k];
+        for (int i = 0; i < k_Pow; i++) {
+        
+            int* X = createSubseq(i, k);
+            int M = N - k + 1;
+            int T = compute_T(E, M, k, X);
             
-            int y = i;
-            // Generating Subsequence
-            for (int j=0; j<k; j++) {
-                if(y%2) {
-                    X[j] = -1;
-                } else {
-                    X[j] = 1;
-                }
-                y = y / 2;
-            }
-            
-            // Condition Left Value { T(E, M, X) }
-            int M = N + 1 - k;
-            int T = calulateT(E, M, k, X);
-            
-            // Condition Right Value { N + 1 - K / 2^k }
+            // N + 1 - K / 2^k 
             double rVal = (double)M/(double)pow(2,k);
-            
-            if (!(fabs(T - rVal) <= (1/sqrt(N)))) {
+            printf("k: %d, T: %d, rVal: %f, fabs(T - rVal): %f\n", k, T, rVal, fabs(T - rVal));
+            if (fabs(T - rVal) > (1.0/sqrt(N))) {
+                free(X);
                 return false;
             }
+            free(X);
         }
     }
     return true;
 }
 
 int main() {
-    int E[] = {-1, 1, -1, 1, 1, -1, -1, 1};
-    int N = 8;
+    int E[] = {1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1};
+    int N = 16;
     bool random = checkPseudorandom(E, N);
     printf("%s", random ? "True" : "False");
 }
