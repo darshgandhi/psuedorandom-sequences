@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-int T(int* E, int M, int k, int* X) {
+int calulateT(int* E, int N, int k, int* X) {
     int count = 0;
     
     // Iterating through E
-    for (int n = 0; n < M; n++) {
+    for (int n = 0; n <= N - k; n++) {
         bool target = true;
         
         for (int j = 0; j < k; j++) {
@@ -17,7 +17,7 @@ int T(int* E, int M, int k, int* X) {
             }
         }
         
-        if (target == true) {
+        if (target) {
             count++;
         }
     }
@@ -34,24 +34,25 @@ bool checkPseudorandom(int* E, int N) {
         for (int i = 0; i < kPow; i++) {
             int X[k];
             
+            int y = i;
             // Generating Subsequence
             for (int j=0; j<k; j++) {
-                if(i%2) {
+                if(y%2) {
                     X[j] = -1;
                 } else {
                     X[j] = 1;
                 }
-                i = i / 2;
+                y = y / 2;
             }
             
             // Condition Left Value { T(E, M, X) }
             int M = N + 1 - k;
-            int Tvalue = T(E, M, k, X);
+            int T = calulateT(E, M, k, X);
             
             // Condition Right Value { N + 1 - K / 2^k }
-            double rVal = (double)(M)/(double)(pow(2,k));
+            double rVal = (double)M/(double)pow(2,k);
             
-            if (!(fabs(Tvalue - rVal) <= (1/sqrt(N)))) {
+            if (!(fabs(T - rVal) <= (1/sqrt(N)))) {
                 return false;
             }
         }
