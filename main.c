@@ -5,60 +5,68 @@
 #include <stdbool.h>
 #include <mpi.h>
 
+// prints E of length N to terminal
 void printArray(int* E, int N) {
     printf("[");
-    for (int i =0; i< N; i++) {
-        printf("%d",E[i]);
-        if(i < N -1) {
+    for (int i = 0; i < N; i++) {
+        printf("%d", E[i]);
+        if(i < (N - 1)) {
             printf(", ");
         }
     }
     printf("]\n");
 }
 
-void printToFile(int* E, int N, FILE* file) {
-    fprintf(file,"[");
-    for (int i =0; i< N; i++) {
-        fprintf(file,"%d",E[i]);
-        if(i < N -1) {
-            fprintf(file, ", ");
-        }
+// Prints E of length N to file pointer fp
+void printToFile(int* E, int N, FILE* fp) {
+    fprintf(fp, "[");  
+    for (int i = 0; i < N; i++) {
+        fprintf(fp, "%d", E[i]);
+        if(i < (N - 1)) fprintf(fp, ", ");
     }
-    fprintf(file,"]\n");
+    fprintf(fp,"]\n");
 }
 
+// creates sequence of length N
 int* createSeq(int N) {
-    int* seq = (int*)malloc(N * sizeof(int));
+    int* seq = (int*) malloc(N * sizeof(int));
     for (int i=0;i<N;i++) {
-        int randVal = rand() % 2;
-        seq[i] = randVal ? 1 : -1;
+        int randVal = rand() % 2;   // not truly random due to how rand() function is implemented
+        seq[i] = (randVal == 0) ? 1 : -1;
     }
     return seq;
 }   
 
+// unclear what this function does, creates a new sequence so the function name is inaccurate
 int* createSeqIdx(int N, int i) {
-    int* seq = (int*)malloc(N * sizeof(int));
-    for (int j=0;j<N;j++) {
-        seq[j] = (i / ((int)pow(2, N - j - 1)) % 2 == 1) ? 1 : -1;
+    int* seq = (int*) malloc(N * sizeof(int));
+    for (int j = 0; j < N; j++) {
+        seq[j] = (i / ((int) pow(2, N - j - 1)) % 2 == 1) ? 1 : -1;
     }
     return seq;
 } 
 
+// can be parallelized
+// computes number of times X occurs as a subsequence in E
 int compute_T(int E[], int N, int k, int X[]) {
     int c = 0;
     for (int n = 0; n <= N - k; n++) {
         bool target = true;
         
         for (int j = 0; j < k; j++) {
-            if (E[n+j] != X[j]) {target = false; break;}
+            if (E[n+j] != X[j]) {
+                target = false; 
+                break;
+            }
         }
         if (target) c++;
     }
     return c;
 }
 
+// creates a sequence X for the T function
 int* createSubseq(int i, int len) {
-    int* X = (int*)malloc(len * sizeof(int));
+    int* X = (int*) malloc(len * sizeof(int));
     for (int j=0; j<len; j++) {
         X[j] = (i % 2) ? -1 : 1;
         i = i / 2;
@@ -66,26 +74,30 @@ int* createSubseq(int i, int len) {
     return X;
 }
 
-// somewhere in this function it for some reason alwasys returns false even if the string is random 
+// All of this can be parallelized, thus the functions it calls can be parallelized
+/* 
+ * checks if subsequence is Pseudorandom or not, by basically executing the second
+ * mathematical definition in our assignment sheet 
+ */
 bool checkPseudorandom(int* E, int N) {
-    int condition = (int)(log2(N));
+    int condition = (int) (log2(N));    // condition variable, named k in definition
     
-    for (int k = 1; k <= condition; k++) {
-        int kPow = (int)pow(2, k);
-        int M = N - k + 1;
+    for (int k = 1; k <= condition; k++) {  // should never loop more than 4 times in this assignment
+        int kPow = (int) pow(2, k); // 2 to the power of k
+        int M = N - k + 1;  // 
 
-        // Iterating through all subsequences of k
+        // Iterating through all subsequences of length k
         for (int i = 0; i < kPow; i++) {
             
-            // Create subsequence & get T
+            // Create subsequence X & run T
             int* X = createSubseq(i, k);
             int T = compute_T(E, M, k, X);
             free(X);
 
-            printf("k: %d, T: %d, rVal: %f, T - rVal: %f sqrt: %f\n", k, T, fabs(T - (float)M/pow(2,k)), (1.0/sqrt(N)));
+            printf("k: %d, T: %d, rVal: %f, T - rVal: %f sqrt: %f\n", k, T, fabs(T - (float)M/pow(2,k)), (1.0/sqrt(N)), 0.0);
 
-            if (fabs(T - (float)M/pow(2,k)) > (1.0/sqrt(N))) {
-                return false;
+            if (fabs(T - (float) M / pow(2,k)) > (1.0/sqrt(N))) {
+                return false;   // always returned for some reason, fix asap
             }
         }
     }
