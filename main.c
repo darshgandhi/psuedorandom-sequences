@@ -12,7 +12,7 @@ void printArray(int* E, int N) {
             printf(", ");
         }
     }
-    printf("]");
+    printf("]\n");
 }
 
 int* generateSequence(int N) {
@@ -77,11 +77,23 @@ bool checkPseudorandom(int* E, int N) {
 int main() {
     // Additionally we need another function so we can generate the array there are a few methods he wants us to follow by D. Knuth, TAOCP volume 2
     srand(time(NULL)); // Need this for random generation otherwise it does the same array
+    
+    // Implementation Question 1 Without MPI:
     int N = 10;
-    int seqLength = pow(2, N);
-    int* E = generateSequence(seqLength);
-    printArray(E, seqLength);
-    printf("\n");
-    bool random = checkPseudorandom(E, seqLength);
+    int* E = generateSequence(N);
+    printArray(E, N);
+
+    bool random = checkPseudorandom(E, N);
     printf("Result: %s", random ? "True" : "False");
+
+    // Implementation Question 2 With MPI for 2^N:
+    /*
+        int N = 10;
+        int seqLength = pow(2, N);
+        int* E = generateSequence(seqLength);
+        printArray(E, seqLength);
+
+        bool random = checkPseudorandom(E, seqLength);
+        printf("Result: %s", random ? "True" : "False");
+    */
 }
