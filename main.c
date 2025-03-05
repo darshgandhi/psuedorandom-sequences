@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <mpi.h>
+// #include "myMPI.h"   // not sure if this is needed for the teach cluster
 
 // prints E of length N to terminal
 void printArray(int* E, int N) {
@@ -27,10 +28,12 @@ void printToFile(int* E, int N, FILE* fp) {
     fprintf(fp,"]\n");
 }
 
-// creates sequence of length N
+// creates sequence seq of length N
 int* createSeq(int N) {
     int* seq = (int*) malloc(N * sizeof(int));
-    for (int i=0;i<N;i++) {
+
+    // this loop should populate seq with {-1, +1} values
+    for (int i = 0; i < N; i++) {     
         int randVal = rand() % 2;   // not truly random due to how rand() function is implemented
         seq[i] = (randVal == 0) ? 1 : -1;
     }
@@ -38,6 +41,7 @@ int* createSeq(int N) {
 }   
 
 // unclear what this function does, creates a new sequence so the function name is inaccurate
+// I believe on further review that this function 
 int* createSeqIdx(int N, int i) {
     int* seq = (int*) malloc(N * sizeof(int));
     for (int j = 0; j < N; j++) {
@@ -94,7 +98,7 @@ bool checkPseudorandom(int* E, int N) {
             int T = compute_T(E, M, k, X);
             free(X);
 
-            printf("k: %d, T: %d, rVal: %f, T - rVal: %f sqrt: %f\n", k, T, fabs(T - (float)M/pow(2,k)), (1.0/sqrt(N)), 0.0);
+            printf("k: %d, T: %d, rVal: %f, T - rVal: %f sqrt: %f\n", k, T, fabs(T - (float) M/pow(2,k)), (1.0/sqrt(N)), 0.0);
 
             if (fabs(T - (float) M / pow(2,k)) > (1.0/sqrt(N))) {
                 return false;   // always returned for some reason, fix asap
@@ -104,26 +108,33 @@ bool checkPseudorandom(int* E, int N) {
     return true;
 }
 
+// main() function, standard for every c program. Entry begins here
 int main() {
     // Additionally we need another function so we can generate the array there are a few methods he wants us to follow by D. Knuth, TAOCP volume 2
     srand(time(NULL)); // Need this for random generation otherwise it does the same array
     
+    // variables for main function (in C vars should be initialized at the start of the function)
+    char filename[20];
+    int N = 0;
+    int* E;
+    bool random;
+    int seqLength = 0;
+    FILE* file;
+
     // Implementation Question 1 Without MPI:
-    int N = 10;
-    int* E = createSeq(N);
+    E = createSeq(N);
     printArray(E, N);
 
-    bool random = checkPseudorandom(E, N);
+    random = checkPseudorandom(E, N);
     printf("Result: %s", random ? "True" : "False");
 
     // Implementation Question 2 With MPI for ALL 2^N sequences:
     N = 15;
-    int seqLength = pow(2, N);
+    seqLength = pow(2, N);
 
     // NEED TO ADD MPI STUFF SOMEWHERE
-    char filename[20];
     snprintf(filename, sizeof(filename), "scratch/pr.%d.txt", N);
-    FILE* file = fopen(filename, "w");
+    file = fopen(filename, "w");
     if (file == NULL) {
         perror("Error opening file");
         exit(1);
