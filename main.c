@@ -26,7 +26,6 @@ int* generateSequence(int N) {
 
 int compute_T(int E[], int N, int k, int X[]) {
     int c = 0;
-    // Iterating through E
     for (int n = 0; n <= N - k; n++) {
         bool target = true;
         
@@ -53,22 +52,21 @@ bool checkPseudorandom(int* E, int N) {
     
     for (int k = 1; k <= condition; k++) {
         int kPow = (int)pow(2, k);
-        
+        int M = N - k + 1;
+
         // Iterating through all subsequences of k
         for (int i = 0; i < kPow; i++) {
             
             // Create subsequence & get T
             int* X = createSubseq(i, k);
-            int M = N - k + 1;
             int T = compute_T(E, M, k, X);
-            float rVal = (float)M/pow(2,k);
 
-            printf("k: %d, T: %d, rVal: %f, fabs(T - rVal): %f sqrt: %f\n", k, T, rVal, fabs(T - rVal), (1.0/sqrt(N)));
+            printf("k: %d, T: %d, rVal: %f, T - rVal: %f sqrt: %f\n", k, T, fabs(T - (float)M/pow(2,k)), (1.0/sqrt(N)));
             
             // Free X 
             free(X);
 
-            if (fabs(T - rVal) > (1.0/sqrt(N))) {
+            if (fabs(T - (float)M/pow(2,k)) > (1.0/sqrt(N))) {
                 return false;
             }
         }
@@ -79,10 +77,11 @@ bool checkPseudorandom(int* E, int N) {
 int main() {
     // Additionally we need another function so we can generate the array there are a few methods he wants us to follow by D. Knuth, TAOCP volume 2
     srand(time(NULL)); // Need this for random generation otherwise it does the same array
-    int N = 16;
-    int* E = generateSequence(N);
-    printArray(E, N);
+    int N = 10;
+    int seqLength = pow(2, N);
+    int* E = generateSequence(seqLength);
+    printArray(E, seqLength);
     printf("\n");
-    bool random = checkPseudorandom(E, N);
+    bool random = checkPseudorandom(E, seqLength);
     printf("Result: %s", random ? "True" : "False");
 }
