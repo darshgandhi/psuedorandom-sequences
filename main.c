@@ -15,7 +15,18 @@ void printArray(int* E, int N) {
     printf("]\n");
 }
 
-int* generateSequence(int N) {
+void printToFile(int* E, int N, FILE* file) {
+    fprintf(file,"[");
+    for (int i =0; i< N; i++) {
+        fprintf(file,"%d",E[i]);
+        if(i < N -1) {
+            fprintf(file, ", ");
+        }
+    }
+    fprintf(file,"]\n");
+}
+
+int* createSeq(int N) {
     int* seq = (int*)malloc(N * sizeof(int));
     for (int i=0;i<N;i++) {
         int randVal = rand() % 2;
@@ -23,6 +34,14 @@ int* generateSequence(int N) {
     }
     return seq;
 }   
+
+int* createSeqIdx(int N, int i) {
+    int* seq = (int*)malloc(N * sizeof(int));
+    for (int j=0;j<N;j++) {
+        seq[j] = (i / ((int)pow(2, N - j - 1)) % 2 == 1) ? 1 : -1;
+    }
+    return seq;
+} 
 
 int compute_T(int E[], int N, int k, int X[]) {
     int c = 0;
@@ -60,11 +79,9 @@ bool checkPseudorandom(int* E, int N) {
             // Create subsequence & get T
             int* X = createSubseq(i, k);
             int T = compute_T(E, M, k, X);
+            free(X);
 
             printf("k: %d, T: %d, rVal: %f, T - rVal: %f sqrt: %f\n", k, T, fabs(T - (float)M/pow(2,k)), (1.0/sqrt(N)));
-            
-            // Free X 
-            free(X);
 
             if (fabs(T - (float)M/pow(2,k)) > (1.0/sqrt(N))) {
                 return false;
@@ -80,20 +97,61 @@ int main() {
     
     // Implementation Question 1 Without MPI:
     int N = 10;
-    int* E = generateSequence(N);
+    int* E = createSeq(N);
     printArray(E, N);
 
     bool random = checkPseudorandom(E, N);
     printf("Result: %s", random ? "True" : "False");
 
-    // Implementation Question 2 With MPI for 2^N:
-    /*
-        int N = 10;
-        int seqLength = pow(2, N);
-        int* E = generateSequence(seqLength);
-        printArray(E, seqLength);
+    // Implementation Question 2 With MPI for ALL 2^N sequences:
+    N = 15;
+    int seqLength = pow(2, N);
 
-        bool random = checkPseudorandom(E, seqLength);
-        printf("Result: %s", random ? "True" : "False");
-    */
+    // NEED TO ADD MPI STUFF SOMEWHERE
+    char filename[20];
+    snprintf(filename, sizeof(filename), "scratch/pr.%d.txt", N);
+    FILE* file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(1);
+    }
+
+    for (int i = 0; i < seqLength; i++) {
+        int* E = createSeqIdx(N, i);
+        printToFile(E, N, file);
+        bool random = checkPseudorandom(E, N);
+        fprintf(file, "Is Sequence Random: %s\n", random ? "True" : "False");
+        free(E);
+    }
+
+    fclose(file);
+    
+    // Implementation Question 4:
+    //DONT RUN BELOW BEFORE MPI IMPLEMENTATION:
+    /*int start = 20;
+    int end = 30;
+    for (start; start <= end; start++) {
+        // Find all Pseudorandom Sequences of lengths 20 <= N <= 30
+        int N = start;
+        int seqLength = pow(2, N);
+
+        // File Stuff
+        char filename[10];
+        snprintf(filename, sizeof(filename), "/scratch/pr.%d.txt", start);
+        FILE* file = fopen(filename, "w");
+
+        if (!file) {
+            printf("Issue Opening File $s\n", filename);
+            break;
+        }
+
+        for (int i = 0; i < seqLength; i++) {
+            int* E = createSeqIdx(N, i);
+            printToFile(E, N, file);
+            bool random = checkPseudorandom(E, N);
+            fprintf(file, "Is Sequence Random: %s\n", random ? "True" : "False");
+            free(E);
+        }
+        fclose(file);
+    }*/
 }
