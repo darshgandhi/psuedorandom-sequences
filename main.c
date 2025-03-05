@@ -1,25 +1,39 @@
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
+void printArray(int* E, int N) {
+    printf("[");
+    for (int i =0; i< N; i++) {
+        printf("%d",E[i]);
+        if(i < N -1) {
+            printf(", ");
+        }
+    }
+    printf("]");
+}
+
+int* generateSequence(int N) {
+    int* seq = (int*)malloc(N * sizeof(int));
+    for (int i=0;i<N;i++) {
+        int randVal = rand() % 2;
+        seq[i] = randVal ? 1 : -1;
+    }
+    return seq;
+}   
+
 int compute_T(int E[], int N, int k, int X[]) {
     int c = 0;
-    bool target;
-    
     // Iterating through E
     for (int n = 0; n <= N - k; n++) {
-        target = true;
+        bool target = true;
         
         for (int j = 0; j < k; j++) {
-            if (E[n+j] != X[j]) {
-                target = false;
-                break;
-            }
+            if (E[n+j] != X[j]) {target = false; break;}
         }
-        if (target) {
-            c++;
-        }
+        if (target) c++;
     }
     return c;
 }
@@ -27,16 +41,11 @@ int compute_T(int E[], int N, int k, int X[]) {
 int* createSubseq(int i, int len) {
     int* X = (int*)malloc(len * sizeof(int));
     for (int j=0; j<len; j++) {
-        if(i%2) {
-            X[j] = -1;
-        } else {
-            X[j] = 1;
-        }
+        X[j] = (i % 2) ? -1 : 1;
         i = i / 2;
     }
     return X;
 }
-
 
 // somewhere in this function it for some reason alwasys returns false even if the string is random 
 bool checkPseudorandom(int* E, int N) {
@@ -52,10 +61,13 @@ bool checkPseudorandom(int* E, int N) {
             int* X = createSubseq(i, k);
             int M = N - k + 1;
             int T = compute_T(E, M, k, X);
-            
-            // N + 1 - K / 2^k 
-            double rVal = (double)M/pow(2,k);
+            float rVal = (float)M/pow(2,k);
+
             printf("k: %d, T: %d, rVal: %f, fabs(T - rVal): %f sqrt: %f\n", k, T, rVal, fabs(T - rVal), (1.0/sqrt(N)));
+            
+            // Free X 
+            free(X);
+
             if (fabs(T - rVal) > (1.0/sqrt(N))) {
                 return false;
             }
@@ -66,8 +78,11 @@ bool checkPseudorandom(int* E, int N) {
 
 int main() {
     // Additionally we need another function so we can generate the array there are a few methods he wants us to follow by D. Knuth, TAOCP volume 2
-    int E[] = {1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1};
+    srand(time(NULL)); // Need this for random generation otherwise it does the same array
     int N = 16;
+    int* E = generateSequence(N);
+    printArray(E, N);
+    printf("\n");
     bool random = checkPseudorandom(E, N);
     printf("Result: %s", random ? "True" : "False");
 }
