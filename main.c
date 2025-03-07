@@ -129,6 +129,7 @@ int main() {
     */
 
     // Implementation Question 1 Without MPI:
+
     //E = createSeq(N);
     printf("Testing sequence: ");
     printArray(E, N);
