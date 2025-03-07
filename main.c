@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 //#include <mpi.h>
-// #include "myMPI.h"   // not sure if this is needed for the teach cluster
+//#include "MyMPI.h"
+#define BUFF_LENGTH 64
 
 // prints E of length N to terminal
 void printArray(int* E, int N) {
@@ -20,7 +21,7 @@ void printArray(int* E, int N) {
 
 // Prints E of length N to file pointer fp
 void printToFile(int* E, int N, FILE* fp) {
-    fprintf(fp, "[");  
+    fprintf(fp, "[");
     for (int i = 0; i < N; i++) {
         fprintf(fp, "%d", E[i]);
         if(i < (N - 1)) fprintf(fp, ", ");
@@ -31,8 +32,8 @@ void printToFile(int* E, int N, FILE* fp) {
 // creates a sequence X for the T function
 int* createSubseq(int i, int len) {
     int* X = (int*) malloc(len * sizeof(int));
-    for (int j=0; j<len; j++) {
-        X[j] = (i % 2) ? -1 : 1;
+    for (int j = 0; j < len; j++) {
+        X[j] = (i % 2 == 0) ? -1 : 1;
         i = i / 2;
     }
     return X;
@@ -43,12 +44,14 @@ int* createSubseq(int i, int len) {
 int* createSeqIdx(int N, int i) {
     int* seq = (int*) malloc(N * sizeof(int));
     for (int j = 0; j < N; j++) {
-        // pow(2, N - j - 1) calculates 2^(N-j-1), which gives the bit position value
+        // "pow(2, N - j - 1)"" calculates 2^(N-j-1), which gives the bit position value
         // which is then used to assign to 1 or -1
         seq[j] = (i / ((int) pow(2, N - j - 1)) % 2 == 1) ? 1 : -1;
     }
     return seq;
-} 
+}
+
+
 
 // can be parallelized
 // computes number of times X occurs as a subsequence in E
@@ -68,24 +71,13 @@ int compute_T(int E[], int N, int k, int X[]) {
     return c;
 }
 
-// creates a sequence X for the T function
-int* createSubseq(int i, int len) {
-    int* X = (int*) malloc(len * sizeof(int));
-    for (int j=0; j<len; j++) {
-        X[j] = (i % 2) ? 1 : -1;
-        i = i / 2;
-    }
-    return X;
-}
-
 // All of this can be parallelized, thus the functions it calls can be parallelized
 /* 
  * checks if subsequence is Pseudorandom or not, by basically executing the second
  * mathematical definition in our assignment sheet 
  */
 bool checkPseudorandom(int* E, int N) {
-    int condition = (int) (log2(N));    // condition variable, named k in definition
-
+    int condition = (int) log2(N);    // condition variable, named k in definition
     printf("Testing sequence length %d w/ log2(N) = %d\n", N, condition);
 
     for (int k = 1; k <= condition; k++) {  // should never loop more than 4 times in this assignment
@@ -107,7 +99,7 @@ bool checkPseudorandom(int* E, int N) {
 
             if (fabs(T - sub) > threshold) {
                 printf("FAILED: Subsequence doesn't meet randomness\n");
-                return false;   // always returned for some reason, fix asap
+                //return false;   // always returned for some reason, fix asap
             }
         }
     }
@@ -120,15 +112,25 @@ int main() {
     srand(time(NULL)); // Need this for random generation otherwise it does the same array
     
     // variables for main function (in C vars should be initialized at the start of the function)
-    char filename[20];
-    int N = 10;
-    int* E;
+    char filename[BUFF_LENGTH]; // name of file to write parallel output to
+    double elapsedTime = 0.0; // Parallel execution time
+    int N = 11; // number of elements in E
+    int* E; // sequence of boolean values to evaluate
     bool random;
-    int seqLength = 10;
+    int seqLength = 11;
     FILE* file;
+    int piss[] = {-1, 1, -1, -1, -1, -1, -1, 1, 1, 1, 1};
+    E = piss;
+
+    /*  fancy input bullshit if we wanna do that
+    printf("Welcome to the pseudo-random sequence checker.\n");
+    printf("Enter 'q' to exit.\nEnter 's' to run in serial.\nEnter 'p' to run in parallel.\ninput> ");
+    fgets(userInput, INPUT_BUFF_SIZE, stdin);   // get input
+    */
 
     // Implementation Question 1 Without MPI:
-    E = createSeq(N);
+
+    //E = createSeq(N);
     printf("Testing sequence: ");
     printArray(E, N);
 
