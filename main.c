@@ -33,18 +33,17 @@ void printToFile(int* E, int N, FILE* fp) {
         fprintf(fp, "%d", E[i]);
         if(i < (N - 1)) fprintf(fp, ", ");
     }
-    fprintf(fp,"]\n");
+    fprintf(fp,"]: ");
 }
 
 // creates a sequence X for the T function
-// by converting i into a bool sequence
 int* createSubseq(int i, int k) {
-    // i is integer value to convert 
+    // i is integer value to convert
     // k is length of output sequence
     int* X = (int*) malloc(k * sizeof(int));
     for (int j = 0; j < k; j++) {
         // below line is used to convert i into a bool array
-        X[j] = (i >> j & 1) ? 1 : -1;
+        X[j] = (i & (1 << (k - j - 1))) ? 1 : -1;
     }
     return X;
 }
@@ -62,7 +61,6 @@ int* createSeqIdx(int N, int i) {
     return seq;
 }
 
-
 // computes number of times X occurs as a subsequence in E
 int compute_T(int E[], int M, int k, int X[]) {
     // E is entered sequence that is checked for randomness
@@ -70,7 +68,7 @@ int compute_T(int E[], int M, int k, int X[]) {
     // k is the length of X
     // X is the sequence for comparison to subsequences of E 
     int output = 0;
-    for (int i = 0; i < M-k; i++) {
+    for (int i = 0; i < M; i++) {
         bool identical = true;
         for (int j = 0; j < k; j++) {
             if (E[i+j] != X[j]) { 
@@ -84,7 +82,7 @@ int compute_T(int E[], int M, int k, int X[]) {
 }
 
 /* 
- * checks if subsequence is Pseudorandom or not using Knuths textbook version, by executing the second
+ * checks if subsequence is Pseudorandom or not using Knuths textbook version, by basically executing the second
  * mathematical definition in our assignment sheet 
  */
 bool checkPseudorandomTextbook(int* E, int N) {
