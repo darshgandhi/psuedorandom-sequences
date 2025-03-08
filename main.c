@@ -35,7 +35,7 @@ void printToFile(int* E, int N, FILE* fp) {
 int* createSubseq(int i, int k) {
     int* X = (int*) malloc(k * sizeof(int));
     for (int j = 0; j < k; j++) {
-        X[j] = (i >> j & 1) ? 1 : -1;
+        X[j] = (i & (1 << (k - j - 1))) ? 1 : -1;
     }
     return X;
 }
@@ -45,18 +45,15 @@ int* createSubseq(int i, int k) {
 int* createSeqIdx(int N, int i) {
     int* seq = (int*) malloc(N * sizeof(int));
     for (int j = 0; j < N; j++) {
-        // "pow(2, N - j - 1)"" calculates 2^(N-j-1), which gives the bit position value
-        // which is then used to assign to 1 or -1
         seq[j] = (i & (1 << (N - j - 1))) ? 1 : -1;
     }
     return seq;
 }
 
-// can be parallelized
 // computes number of times X occurs as a subsequence in E
 int compute_T(int E[], int M, int k, int X[]) {
     int c = 0;
-    for (int i = 0; i < M-k; i++) {
+    for (int i = 0; i < M-1; i++) {
         bool target = true;
         for (int j = 0; j < k; j++) {
             if (E[i+j] != X[j]) { 
@@ -70,10 +67,10 @@ int compute_T(int E[], int M, int k, int X[]) {
 }
 
 /* 
- * checks if subsequence is Pseudorandom or not, by basically executing the second
+ * checks if subsequence is Pseudorandom or not using Knuths textbook version, by basically executing the second
  * mathematical definition in our assignment sheet 
  */
-bool checkPseudorandom(int* E, int N) {
+bool checkPseudorandomTextbook(int* E, int N) {
     int kMax = (int)floor(log(N) / log(2));    // condition variable, named k in definition
     //printf("Testing sequence length %d w/ log2(N) = %d\n", N, kMax);
 
@@ -109,6 +106,36 @@ bool checkPseudorandom(int* E, int N) {
     return true;
 }
 
+/* 
+ * checks if subsequence is Pseudorandom or not, by basically executing the second
+ * mathematical definition in our assignment sheet 
+ */
+bool checkPseudorandom(int* E, int N) {
+    int kMax = (int)floor(log(N) / log(2));    // condition variable, named k in definition
+
+    // Iterating through all subsequences of length k (Each K can be worked on at the same time using MPI)
+    for (int k = 1; k <= kMax; k++) {  // should never loop more than 4 times in this assignment
+        int kPow = 1 << k; // 2 to the power of k
+
+        // printf("Testing K = %d\n", k);
+        for (int i = 0; i < kPow; i++) {
+            
+            // Create subsequence X & run T
+            int* X = createSubseq(i, k);
+            int M = N + 1 - k; 
+            int T = compute_T(E, M, k, X);
+            
+            double sqrtN = 1.0/sqrt(N); 
+            double subVal = (double)(N + 1 - k) / (1 << k); // 1 << k is the same as pow(2,k) form before
+            
+            free(X);
+
+            if (fabs(T - subVal) > sqrtN) return false;
+        }
+    }
+    return true;
+}
+
 // main() function, standard for every c program. Entry begins here
 int main() {   
 
@@ -123,10 +150,6 @@ int main() {
     int N = 11; // number of elements in E
     int hardcoded[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     E = hardcoded;
-
-    /* 
-    srand(time(NULL)); // Need this for random generation otherwise it does the same array
-    E = createSeq(N); // Only use if you want randomly generated sequence and uncomment above srand as well // */
 
     printf("Testing Hardcoded Sequence: ");
     printArray(E, N);
@@ -146,17 +169,14 @@ int main() {
         exit(true);
     }
 
-    // int numFound = 0;
 
     // Each sequence can be tested independently, so divide the 2^N sequences among processes.
     for (long long i = 0; i < totalSeq; i++) {
         int* E = createSeqIdx(N, i);
         bool random = checkPseudorandom(E, N);
         if (random) {
-            // numFound++;
-            // printf("Num Found: %d\n",numFound);
             printToFile(E, N, file);
-            //fprintf(file, "Is Sequence Random: %s\n", random ? "True" : "False");
+            fprintf(file, "Is Sequence Random: %s\n", random ? "True" : "False");
         }
         free(E);
     }
