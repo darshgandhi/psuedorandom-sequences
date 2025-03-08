@@ -3,7 +3,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <mpi.h>
+//#include <mpi.h>
 //#include "MyMPI.h"
 #define BUFF_LENGTH 64
 
@@ -59,7 +59,10 @@ int compute_T(int E[], int M, int k, int X[]) {
     for (int i = 0; i < M-k; i++) {
         bool target = true;
         for (int j = 0; j < k; j++) {
-            if (E[i+j] != X[j]) { target = false; break; }
+            if (E[i+j] != X[j]) { 
+                target = false; 
+                break; 
+            }
         }
         if (target) c++;
     }
@@ -84,22 +87,23 @@ bool checkPseudorandom(int* E, int N) {
             // Create subsequence X & run T
             int* X = createSubseq(i, k);
             int M = N + 1 - k; 
-            //printf("For N = %d and k = %d, M = %d\n", N, k, M);
+            // printf("For N = %d and k = %d, M = %d\n", N, k, M);
             int T = compute_T(E, M, k, X);
             
-            double sqrtN = 1.0/sqrt(N); 
+            double sqrtN = sqrt(N); 
             double subVal = (double)(N + 1 - k) / (1 << k); // 1 << k is the same as pow(2,k) form before
-            //printArray(X, k);
             
             free(X);
 
-            //printf("k: %d, T: %d, T - subVal: %f sqrt: %f\n", k, T, fabs(T - subVal), (1.0/sqrt(N)));
+            if (fabs(T - subVal) > sqrtN) return false;
+            /*  // alternate version of the above line for finding errors
+            printf("k: %d, T: %d, T - subVal: %f sqrt: %f\n", k, T, fabs(T - subVal), (1.0/sqrt(N)));
             if (fabs(T - subVal) > sqrtN) {
-                //printf("FAILED: Subsequence doesn't meet randomness\n");
+                printf("FAILED: Subsequence doesn't meet randomness\n");
                 return false;
             } else {
                 printf("Found Sequence\n");
-            }
+            }   // */
         }
     }
     return true;
@@ -115,19 +119,14 @@ int main() {
     bool random;
     FILE* file;
 
-    /* Testing
-    printf("Welcome to the pseudo-random sequence checker.\n");
-    printf("Enter 'q' to exit.\nEnter 's' to run in serial.\nEnter 'p' to run in parallel.\ninput> ");
-    fgets(userInput, INPUT_BUFF_SIZE, stdin);   // get input
-    */
-
     // Implementation Question 1 Without MPI: For single N
     int N = 11; // number of elements in E
-    int hardcoded[] = {-1, 1, -1, -1, -1, -1, -1, 1, 1, 1, 1};
+    int hardcoded[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     E = hardcoded;
 
-    // srand(time(NULL)); // Need this for random generation otherwise it does the same array
-    // E = createSeq(N); // Only use if you want randomly generated sequence and uncomment above srand as well
+    /* 
+    srand(time(NULL)); // Need this for random generation otherwise it does the same array
+    E = createSeq(N); // Only use if you want randomly generated sequence and uncomment above srand as well // */
 
     printf("Testing Hardcoded Sequence: ");
     printArray(E, N);
@@ -137,8 +136,7 @@ int main() {
     printf("\n");
 
     // Implementation Question 2 With MPI for ALL 2^N sequences:
-    int Given_N = 11;
-    long long totalSeq = pow(2,Given_N); // using long long for if 30 is input then int isnt long enough
+    long long totalSeq = pow(2, N); // using long long for if 30 is input then int isnt long enough
 
     printf("# of Unique Sequences: %d\n",totalSeq);
     snprintf(filename, sizeof(filename), "scratch/pr.%d.txt", N);
@@ -148,17 +146,17 @@ int main() {
         exit(true);
     }
 
-    int numFound = 0;
+    // int numFound = 0;
 
     // Each sequence can be tested independently, so divide the 2^N sequences among processes.
     for (long long i = 0; i < totalSeq; i++) {
         int* E = createSeqIdx(N, i);
         bool random = checkPseudorandom(E, N);
         if (random) {
-            printf("Num Found: %d\n",numFound);
-            numFound++;
+            // numFound++;
+            // printf("Num Found: %d\n",numFound);
             printToFile(E, N, file);
-            fprintf(file, "Is Sequence Random: %s\n", random ? "True" : "False");
+            //fprintf(file, "Is Sequence Random: %s\n", random ? "True" : "False");
         }
         free(E);
     }
