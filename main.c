@@ -145,8 +145,8 @@ bool checkPseudorandomMPI(int* E, int N, rank, size) {
     bool localRandom = true;
     bool globalRandom = true;
 
-    // NEED TO CALL MPI HERE I THINK??? for each K we need to handle
-    // Not sure
+    // Not sure if we need to call MPI here or not otherwise just in the
+    main is fine
     for (int k = 1; k <= kMax; k++) {  // should never loop more than 4 times in this assignment
         int kPow = 1 << k; // 2 to the power of k
 
