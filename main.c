@@ -113,7 +113,7 @@ bool checkPseudorandomTextbook(int* E, int N) {
 bool checkPseudorandom(int* E, int N) {
     int kMax = (int)floor(log(N) / log(2));    // condition variable, named k in definition
 
-    // Iterating through all subsequences of length k (Each K can be worked on at the same time using MPI)
+    // Iterating through all subsequences of length k
     for (int k = 1; k <= kMax; k++) {  // should never loop more than 4 times in this assignment
         int kPow = 1 << k; // 2 to the power of k
 
