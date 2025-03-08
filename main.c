@@ -53,7 +53,7 @@ int* createSeqIdx(int N, int i) {
 // computes number of times X occurs as a subsequence in E
 int compute_T(int E[], int M, int k, int X[]) {
     int c = 0;
-    for (int i = 0; i < M-1; i++) {
+    for (int i = 0; i < M; i++) {
         bool target = true;
         for (int j = 0; j < k; j++) {
             if (E[i+j] != X[j]) { 
