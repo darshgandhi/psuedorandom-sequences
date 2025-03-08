@@ -71,36 +71,36 @@ int compute_T(int E[], int M, int k, int X[]) {
  * mathematical definition in our assignment sheet 
  */
 bool checkPseudorandomTextbook(int* E, int N) {
-    int kMax = (int)floor(log(N) / log(2));    // condition variable, named k in definition
+    // E is the bool sequence to check 
+
+    //int N = sizeof(*E) / sizeof(E[0]);   // number of elements in E
+    //printf("%d\n", N);
+    int kMax = (int) floor(log2(N));    // condition variable, named k in definition
+    
     //printf("Testing sequence length %d w/ log2(N) = %d\n", N, kMax);
 
-    // Iterating through all subsequences of length k (Each K can be worked on at the same time using MPI)
+    // Iterating through all subsequences of length k
     for (int k = 1; k <= kMax; k++) {  // should never loop more than 4 times in this assignment
-        int kPow = 1 << k; // 2 to the power of k
+        int kPow = pow(2, k); // 2 to the power of k
 
         // printf("Testing K = %d\n", k);
         for (int i = 0; i < kPow; i++) {
             
             // Create subsequence X & run T
             int* X = createSubseq(i, k);
-            int M = N + 1 - k; 
-            // printf("For N = %d and k = %d, M = %d\n", N, k, M);
-            int T = compute_T(E, M, k, X);
-            
-            double sqrtN = sqrt(N); 
-            double subVal = (double)(N + 1 - k) / (1 << k); // 1 << k is the same as pow(2,k) form before
-            
+            int valueT = compute_T(E, (N + 1), k, X);
             free(X);
+            
+            double sqrtN = 1.0/sqrt(N); 
+            double subVal = 1.0 / kPow;
 
-            if (fabs(T - subVal) > sqrtN) return false;
-            /*  // alternate version of the above line for finding errors
-            printf("k: %d, T: %d, T - subVal: %f sqrt: %f\n", k, T, fabs(T - subVal), (1.0/sqrt(N)));
-            if (fabs(T - subVal) > sqrtN) {
-                printf("FAILED: Subsequence doesn't meet randomness\n");
-                return false;
-            } else {
-                printf("Found Sequence\n");
-            }   // */
+            double dValueT = (double) valueT;
+
+            double compValue = dValueT/N;
+            compValue -= subVal;
+            compValue = fabs(compValue);
+
+            if (compValue > sqrtN) return false;
         }
     }
     return true;
@@ -114,39 +114,6 @@ bool checkPseudorandom(int* E, int N) {
     int kMax = (int)floor(log(N) / log(2));    // condition variable, named k in definition
 
     // Iterating through all subsequences of length k (Each K can be worked on at the same time using MPI)
-    for (int k = 1; k <= kMax; k++) {  // should never loop more than 4 times in this assignment
-        int kPow = 1 << k; // 2 to the power of k
-
-        // printf("Testing K = %d\n", k);
-        for (int i = 0; i < kPow; i++) {
-            
-            // Create subsequence X & run T
-            int* X = createSubseq(i, k);
-            int M = N + 1 - k; 
-            int T = compute_T(E, M, k, X);
-            
-            double sqrtN = 1.0/sqrt(N); 
-            double subVal = (double)(N + 1 - k) / (1 << k); // 1 << k is the same as pow(2,k) form before
-            
-            free(X);
-
-            if (fabs(T - subVal) > sqrtN) return false;
-        }
-    }
-    return true;
-}
-
-/* 
- * checks if subsequence is Pseudorandom or not, by basically executing the second
- * mathematical definition in our assignment sheet 
- */
-bool checkPseudorandomMPI(int* E, int N, rank, size) {
-    int kMax = (int)floor(log(N) / log(2));    // condition variable, named k in definition
-    bool localRandom = true;
-    bool globalRandom = true;
-
-    // Not sure if we need to call MPI here or not otherwise just in the
-    main is fine
     for (int k = 1; k <= kMax; k++) {  // should never loop more than 4 times in this assignment
         int kPow = 1 << k; // 2 to the power of k
 
@@ -244,7 +211,7 @@ int main(int argc, char** argv) {
     // Each sequence can be tested independently, so divide the 2^N sequences among processes.
     for (long long i = 0; i < totalSeq; i++) {
         int* E = createSeqIdx(N, i);
-        bool random = checkPseudorandomMPI(E, N, rank, size);
+        bool random = checkPseudorandom(E, N);
 
         if (random) localSeqCount++;
         printToFile(E, N, localFile);
