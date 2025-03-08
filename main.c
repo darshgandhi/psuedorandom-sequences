@@ -3,7 +3,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdbool.h>
-//#include <mpi.h>
+#include <mpi.h>
 //#include "MyMPI.h"
 #define BUFF_LENGTH 64
 
@@ -136,21 +136,49 @@ bool checkPseudorandom(int* E, int N) {
     return true;
 }
 
-// main() function, standard for every c program. Entry begins here
-int main() {   
+/* 
+ * checks if subsequence is Pseudorandom or not, by basically executing the second
+ * mathematical definition in our assignment sheet 
+ */
+bool checkPseudorandomMPI(int* E, int N, rank, size) {
+    int kMax = (int)floor(log(N) / log(2));    // condition variable, named k in definition
+    bool localRandom = true;
+    bool globalRandom = true;
 
-    // variables for main function
-    char filename[BUFF_LENGTH]; // name of file to write parallel output to
-    double elapsedTime = 0.0; // Parallel execution time
-    int* E; // sequence of boolean values to evaluate
-    bool random;
-    FILE* file;
+    // NEED TO CALL MPI HERE I THINK??? for each K we need to handle
+    // Not sure
+    for (int k = 1; k <= kMax; k++) {  // should never loop more than 4 times in this assignment
+        int kPow = 1 << k; // 2 to the power of k
 
+        // printf("Testing K = %d\n", k);
+        for (int i = 0; i < kPow; i++) {
+            
+            // Create subsequence X & run T
+            int* X = createSubseq(i, k);
+            int M = N + 1 - k; 
+            int T = compute_T(E, M, k, X);
+            
+            double sqrtN = 1.0/sqrt(N); 
+            double subVal = (double)(N + 1 - k) / (1 << k); // 1 << k is the same as pow(2,k) form before
+            
+            free(X);
+
+            if (fabs(T - subVal) > sqrtN) return false;
+        }
+    }
+    return true;
+}
+
+int main(int argc, char** argv) {   
+    // COMMENT OUT SECTIONS DEPENDING ON WHAT UR TESTING
     //=======================================================================
     // QUESTION 1
     // Without MPI: For single N
+    /*
+    int* E; // sequence of boolean values to evaluate
+    bool random;
     int N = 11; // number of elements in E
-    int hardcoded[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+    int hardcoded[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}; // update accordingly
     E = hardcoded;
 
     printf("Testing Hardcoded Sequence: ");
@@ -159,66 +187,77 @@ int main() {
     random = checkPseudorandom(E, N);
     printf("Result For Hardcoded Sequence (Is Random?): %s", random ? "True" : "False");
     printf("\n");
+    */
     //=======================================================================
 
 
     //=======================================================================
     //   QUESTION 2
     //   With MPI for ALL 2^N sequences
-    N = 3;
+    //=======================================================================
+
+    // Define Variables
+
+    // Initialize MPI Stuff
+    int rank, size;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    double start_time, end_time;
+
+    if (argc < 2) {
+        if (rank == 0) {
+            printf("Incorrect Entry!");
+        }
+        MPI_Finalize();
+        return true;
+    }
+
+    // Get N and also Determine total number of sequences
+    int N = atoi(argv[1]); // send the N in from the command line
     long long totalSeq = pow(2, N); // using long long for if 30 is input then int isnt long enough
 
-    printf("# of Unique Sequences: %d\n",totalSeq);
-    snprintf(filename, sizeof(filename), "scratch/pr.%d.txt", N);
-    file = fopen(filename, "w");
+    // Creates a output file for the results
+    char localFilename[BUFF_LENGTH];
+    snprintf(localFilename, sizeof(localFilename), "local_pr_%d.%d.txt", rank, N);
+    FILE* localFile = fopen(localFilename, "w");
+
+    // Handle Errors for file stuff
     if (file == NULL) {
         perror("Error opening file");
         exit(true);
     }
 
+    // Determine workload for each process
+    int localSeqCount = 0;
+    long long workload = totalSeq / size;
+    long long startLocal = rank * workload;
+    long long endLocal = 0;
+    if (rank == size - 1) {
+        endLocal = totalSeq;
+    } else {
+        endLocal = (rank+1)*workload
+    }
+
+    startTime = MPI_Wtime();
 
     // Each sequence can be tested independently, so divide the 2^N sequences among processes.
     for (long long i = 0; i < totalSeq; i++) {
         int* E = createSeqIdx(N, i);
-        bool random = checkPseudorandom(E, N);
-        printToFile(E, N, file);
-        fprintf(file, "Is Random? %s\n", random ? "True" : "False");
+        bool random = checkPseudorandomMPI(E, N, rank, size);
+
+        if (random) localSeqCount++;
+        printToFile(E, N, localFile);
+        fprintf(localFile, "Is Random? %s\n", random ? "True" : "False");
+
         free(E);
     }
 
-    fclose(file);
-    //=======================================================================
-    
-    // Implementation Question 4:
-    //DONT RUN BELOW BEFORE MPI IMPLEMENTATION:
-    /*int start = 24;
-    int end = 27;
-    for (; start <= end; start++) {
-        // Find all Pseudorandom Sequences of lengths 20 <= N <= 30
-        int N = start;
-        int seqLength = pow(2, N);
+    endTime = MPI_Wtime();
 
-        // File Stuff
-        printf("Trying N = %d with seqLength= %d", N, seqLength);
-        snprintf(filename, sizeof(filename), "/scratch/pr.%d.txt", start);
-        FILE* file = fopen(filename, "w");
-        fprintf(file, "Trying N = %d with seqLength= %d", N, seqLength);
+    fclose(localFile);
 
-        if (!file) {
-            printf("Issue Opening File %s\n", file);
-            break;
-        }
-
-        for (int i = 0; i < seqLength; i++) {
-            int* E = createSeqIdx(N, i);
-            bool random = checkPseudorandom(E, N);
-            if (random) {
-                printf("Here");
-                printToFile(E, N, file);
-                fprintf(file, "Is Sequence Random: %s\n", random ? "True" : "False");
-            }
-            free(E);
-        }
-        fclose(file);
-    }*/
+    // NEED TO GATHER STUFF AND THEN ALSO MERGE ALL TEMP FILES INTO A FINAL FILE BELOW
+    // Keep MPI  FINALIZe below everything
+    MPI_Finalize();
 }
