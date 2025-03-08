@@ -10,6 +10,8 @@
 // prints E of length N to terminal
 // Used for Testing
 void printArray(int* E, int N) {
+    // E is the bool sequence to print
+    // N is the length of E
     printf("[");
     for (int i = 0; i < N; i++) {
         printf("%d", E[i]);
@@ -23,19 +25,26 @@ void printArray(int* E, int N) {
 // Prints E of length N to file pointer fp
 // Use only for valid sequences to avoid bad time complexity
 void printToFile(int* E, int N, FILE* fp) {
+    // E is the sequence of bools to print
+    // N is the length of E
+    // fp is the file pointer that pointer to where to print
     fprintf(fp, "[");
     for (int i = 0; i < N; i++) {
         fprintf(fp, "%d", E[i]);
         if(i < (N - 1)) fprintf(fp, ", ");
     }
-    fprintf(fp,"]: ");
+    fprintf(fp,"]\n");
 }
 
 // creates a sequence X for the T function
+// by converting i into a bool sequence
 int* createSubseq(int i, int k) {
+    // i is integer value to convert 
+    // k is length of output sequence
     int* X = (int*) malloc(k * sizeof(int));
     for (int j = 0; j < k; j++) {
-        X[j] = (i & (1 << (k - j - 1))) ? 1 : -1;
+        // below line is used to convert i into a bool array
+        X[j] = (i >> j & 1) ? 1 : -1;
     }
     return X;
 }
@@ -43,31 +52,39 @@ int* createSubseq(int i, int k) {
 // This function is called from a for loop to
 // all possible sequences of length N as i iterates from 0 to 2^N-1
 int* createSeqIdx(int N, int i) {
+    // i is integer to convert
+    // N is length of sequence
     int* seq = (int*) malloc(N * sizeof(int));
     for (int j = 0; j < N; j++) {
+        // below line is used to convert i into a bool array
         seq[j] = (i & (1 << (N - j - 1))) ? 1 : -1;
     }
     return seq;
 }
 
+
 // computes number of times X occurs as a subsequence in E
 int compute_T(int E[], int M, int k, int X[]) {
-    int c = 0;
-    for (int i = 0; i < M; i++) {
-        bool target = true;
+    // E is entered sequence that is checked for randomness
+    // M is the length of comparison sequence (N + 1)
+    // k is the length of X
+    // X is the sequence for comparison to subsequences of E 
+    int output = 0;
+    for (int i = 0; i < M-k; i++) {
+        bool identical = true;
         for (int j = 0; j < k; j++) {
             if (E[i+j] != X[j]) { 
-                target = false; 
+                identical = false; 
                 break; 
             }
         }
-        if (target) c++;
+        if (identical) output++;
     }
-    return c;
+    return output;
 }
 
 /* 
- * checks if subsequence is Pseudorandom or not using Knuths textbook version, by basically executing the second
+ * checks if subsequence is Pseudorandom or not using Knuths textbook version, by executing the second
  * mathematical definition in our assignment sheet 
  */
 bool checkPseudorandomTextbook(int* E, int N) {
