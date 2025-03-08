@@ -28,7 +28,7 @@ void printToFile(int* E, int N, FILE* fp) {
         fprintf(fp, "%d", E[i]);
         if(i < (N - 1)) fprintf(fp, ", ");
     }
-    fprintf(fp,"]\n");
+    fprintf(fp,"]: ");
 }
 
 // creates a sequence X for the T function
@@ -146,7 +146,9 @@ int main() {
     bool random;
     FILE* file;
 
-    // Implementation Question 1 Without MPI: For single N
+    //=======================================================================
+    // QUESTION 1
+    // Without MPI: For single N
     int N = 11; // number of elements in E
     int hardcoded[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     E = hardcoded;
@@ -157,8 +159,13 @@ int main() {
     random = checkPseudorandom(E, N);
     printf("Result For Hardcoded Sequence (Is Random?): %s", random ? "True" : "False");
     printf("\n");
+    //=======================================================================
 
-    // Implementation Question 2 With MPI for ALL 2^N sequences:
+
+    //=======================================================================
+    //   QUESTION 2
+    //   With MPI for ALL 2^N sequences
+    N = 3;
     long long totalSeq = pow(2, N); // using long long for if 30 is input then int isnt long enough
 
     printf("# of Unique Sequences: %d\n",totalSeq);
@@ -174,14 +181,13 @@ int main() {
     for (long long i = 0; i < totalSeq; i++) {
         int* E = createSeqIdx(N, i);
         bool random = checkPseudorandom(E, N);
-        if (random) {
-            printToFile(E, N, file);
-            fprintf(file, "Is Sequence Random: %s\n", random ? "True" : "False");
-        }
+        printToFile(E, N, file);
+        fprintf(file, "Is Random? %s\n", random ? "True" : "False");
         free(E);
     }
 
     fclose(file);
+    //=======================================================================
     
     // Implementation Question 4:
     //DONT RUN BELOW BEFORE MPI IMPLEMENTATION:
