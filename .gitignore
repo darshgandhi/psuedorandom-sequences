@@ -1,3 +1,5 @@
 # top-level gitignore for A2
 *.o
 *.exe
+instructions.md
+/other
