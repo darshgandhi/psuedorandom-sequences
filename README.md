@@ -25,5 +25,5 @@ mpirun -np <number-of-cores> ./pseudorandom.exe <N>
 Example for N=10 with 8 cores:
 
 ```
-mpirun -np 8 ./pseudorandom 10
+mpirun -np 8 ./pseudorandom.exe 10
 ```
