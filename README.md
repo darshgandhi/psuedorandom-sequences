@@ -31,15 +31,6 @@ For *N=10* using *8 cores*:
 mpirun -np 8 ./pseudorandom.exe 10
 ```
 
-## Output
-- The program finds all pseudorandom sequences for *N* in the range **20 ≤ N ≤ 30**.
-- Results are stored in **11 separate files** in the `/scratch` directory, named:
-  - `pr.20.txt`
-  - `pr.21.txt`
-  - ...
-  - `pr.30.txt`
-- The final report must include the source code and a table listing the number of pseudorandom sequences found for each *N*.
-
 ## Implementation Details
 1. A C function checks if a given sequence satisfies the pseudorandomness condition.
 2. The MPI program distributes tasks efficiently to test all possible sequences.
