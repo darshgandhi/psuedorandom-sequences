@@ -45,7 +45,3 @@ mpirun -np 8 ./pseudorandom.exe 10
 2. The MPI program distributes tasks efficiently to test all possible sequences.
 3. The solution leverages parallelism to optimize performance.
 4. The results are stored for further analysis.
-
-## Notes
-- Ensure you follow SHARCNET usage guidelines.
-- Any misuse of cluster resources may result in penalties.
